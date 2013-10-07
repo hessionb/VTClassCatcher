@@ -1,0 +1,18 @@
+<?xml version="1.0" encoding="utf-8"?>
+<merge xmlns:android="http://schemas.android.com/apk/res/android"
+    android:layout_width="match_parent"
+    android:layout_height="match_parent" >
+    
+	<include layout="@layout/login_main"
+	     android:id="@+id/loginview" 
+	     android:layout_width="fill_parent" 
+	     android:layout_height="fill_parent" 
+	     android:visibility="visible" />
+	
+	<include layout="@layout/checkclass_main"
+	    android:id="@+id/classview" 
+	    android:layout_width="fill_parent"
+	    android:layout_height="fill_parent"
+	    android:visibility="gone" />
+    
+</merge>
