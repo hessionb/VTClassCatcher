@@ -19,19 +19,21 @@ public class MainActivity extends Activity {
 	private TextView loginupdate_, classupdate_;
 	private View loginview_, classview_;
 	
-	private HokieLogger hokieLogger_;
-
+	private User user_;
+	
 	@Override
 	protected void onCreate(Bundle savedInstanceState) {
 		super.onCreate(savedInstanceState);
 		setContentView(R.layout.layout_main);
-		hokieLogger_ = new HokieLogger();
 		
 		// Get resources
 		loginview_ = (View) findViewById(R.id.loginview);
 		classview_ = (View) findViewById(R.id.classview);
 		loginupdate_ = (TextView) findViewById(R.id.loginupdate);
 		classupdate_ = (TextView) findViewById(R.id.classupdate);
+		
+		// Create user
+		user_ = new User();
 
 		// Initialize Buttons
 		initializeInputs();
@@ -84,8 +86,11 @@ public class MainActivity extends Activity {
 		loginbutton_.setOnClickListener(new OnClickListener() {
 			@Override
 			public void onClick(View v) {
-				classview_.setVisibility(View.VISIBLE);
-				loginview_.setVisibility(View.GONE);
+				loginupdate_.setText("Logging In");
+				user_.setCredentials(pidinput_.getText().toString().toCharArray(), 
+						passwordinput_.getText().toString().toCharArray());
+//				classview_.setVisibility(View.VISIBLE);
+//				loginview_.setVisibility(View.GONE);
 			}
 		});
 
@@ -94,8 +99,6 @@ public class MainActivity extends Activity {
 			@Override
 			public void onClick(View v) {
 				classupdate_.setText("Running...");
-				hokieLogger_.setCredentials("test","test2");
-				hokieLogger_.execute();
 			}
 		});
 
@@ -104,7 +107,6 @@ public class MainActivity extends Activity {
 			@Override
 			public void onClick(View v) {
 				classupdate_.setText("Cancelled");
-				hokieLogger_.cancel(true);
 			}
 		});
 
