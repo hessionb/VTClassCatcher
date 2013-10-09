@@ -1,6 +1,10 @@
 package edu.vt.ece4564.vtclasscatcher;
 
+import java.util.Timer;
+import java.util.TimerTask;
+
 import android.app.Activity;
+import android.graphics.Color;
 import android.os.Bundle;
 import android.view.Menu;
 import android.view.View;
@@ -13,32 +17,33 @@ import android.widget.TextView;
 
 public class MainActivity extends Activity {
 
-	private Button loginbutton_, runbutton_, cancelbutton_, logoutbutton_;
-	private EditText pidinput_, passwordinput_, crninput_, yearinput_, crseinput_;
-	private Spinner termspinner_, subjectspinner_;
-	private TextView loginupdate_, classupdate_;
-	private View loginview_, classview_;
-	
-	private User user_;
+	private UIManager ui_;
+	private CASManager user_;
+	private Timer timer_;
+	private boolean running_;
 	
 	@Override
 	protected void onCreate(Bundle savedInstanceState) {
 		super.onCreate(savedInstanceState);
 		setContentView(R.layout.layout_main);
+
+		// Create managers
+		ui_ = new UIManager();
+		user_ = new CASManager();
 		
 		// Get resources
-		loginview_ = (View) findViewById(R.id.loginview);
-		classview_ = (View) findViewById(R.id.classview);
-		loginupdate_ = (TextView) findViewById(R.id.loginupdate);
-		classupdate_ = (TextView) findViewById(R.id.classupdate);
-		
-		// Create user
-		user_ = new User();
-
-		// Initialize Buttons
-		initializeInputs();
+		ui_.setViews((View) findViewById(R.id.loginview), 
+					 (View) findViewById(R.id.classview));
+		ui_.setTextViews((TextView) findViewById(R.id.loginupdate), 
+						 (TextView) findViewById(R.id.classupdate));
+		ui_.setEditTexts((EditText) findViewById(R.id.pidinput),
+						 (EditText) findViewById(R.id.passwordinput),
+						 (EditText) findViewById(R.id.crninput),
+						 (EditText) findViewById(R.id.yearinput));
 		initializeSpinners();
 		initializeButtons();
+		
+		running_ = false;
 	}
 
 	@Override
@@ -48,75 +53,95 @@ public class MainActivity extends Activity {
 		return true;
 	}
 
-	// Gets all of the EditTexts from R
-	private void initializeInputs() {
-		pidinput_ = (EditText) findViewById(R.id.pidinput);
-		passwordinput_ = (EditText) findViewById(R.id.passwordinput);
-		crninput_ = (EditText) findViewById(R.id.crninput);
-		yearinput_ = (EditText) findViewById(R.id.yearinput);
-		crseinput_ = (EditText) findViewById(R.id.crseinput);
-	}
-
 	// Gets Spinners from R and populates them
 	private void initializeSpinners() {
-		termspinner_ = (Spinner) findViewById(R.id.termspinner);
-		subjectspinner_ = (Spinner) findViewById(R.id.subjectspinner);
+		Spinner termSpinner = (Spinner) findViewById(R.id.termspinner);
 
 		// Add items to term spinner
 		ArrayAdapter<CharSequence> adapter = ArrayAdapter.createFromResource(
 				this, R.array.term_array, android.R.layout.simple_spinner_item);
 		adapter.setDropDownViewResource(android.R.layout.simple_spinner_dropdown_item);
-		termspinner_.setAdapter(adapter);
-
-		// Add items to subject spinner
-		adapter = ArrayAdapter.createFromResource(this, R.array.subj_array,
-				android.R.layout.simple_spinner_item);
-		adapter.setDropDownViewResource(android.R.layout.simple_spinner_dropdown_item);
-		subjectspinner_.setAdapter(adapter);
+		termSpinner.setAdapter(adapter);
+		
+		// Set Spinners
+		ui_.setSpinners(termSpinner);
 	}
 
 	// Gets Buttons from R and sets their click listeners
 	private void initializeButtons() {
-		loginbutton_ = (Button) findViewById(R.id.submit);
-		runbutton_ = (Button) findViewById(R.id.runbutton);
-		cancelbutton_ = (Button) findViewById(R.id.cancelbutton);
-		logoutbutton_ = (Button) findViewById(R.id.logoutbutton);
-
+		ui_.setButtons((Button) findViewById(R.id.submit),
+					   (Button) findViewById(R.id.runbutton),
+					   (Button) findViewById(R.id.cancelbutton),
+					   (Button) findViewById(R.id.logoutbutton));
+		
 		// Logs in to HokieSpa
-		loginbutton_.setOnClickListener(new OnClickListener() {
+		ui_.setLoginButtonListener(new OnClickListener() {
 			@Override
 			public void onClick(View v) {
-				loginupdate_.setText("Logging In");
-				user_.setCredentials(pidinput_.getText().toString().toCharArray(), 
-						passwordinput_.getText().toString().toCharArray());
-//				classview_.setVisibility(View.VISIBLE);
-//				loginview_.setVisibility(View.GONE);
+				ui_.setLoginTextColor(Color.BLACK);
+				ui_.setLoginText("Logging in...");
+				ui_.setClassTextColor(Color.BLACK);
+				ui_.setClassText("");
+				new LoginTask(ui_,user_).execute("Login");
 			}
 		});
 
 		// Runs class check
-		runbutton_.setOnClickListener(new OnClickListener() {
+		ui_.setRunButtonListener(new OnClickListener() {
 			@Override
 			public void onClick(View v) {
-				classupdate_.setText("Running...");
+				ui_.setClassTextColor(Color.BLACK);
+				ui_.setClassText("Getting data...");
+				ui_.toggleCancelButton();
+				ui_.toggleRunButton();
+				timer_ = new Timer();
+				timer_.schedule(new MyTimer(), 0, 5*60*1000); // 5 minutes
+				running_ = true;
 			}
 		});
 
 		// Cancels class check
-		cancelbutton_.setOnClickListener(new OnClickListener() {
+		ui_.setCancelButtonListener(new OnClickListener() {
 			@Override
 			public void onClick(View v) {
-				classupdate_.setText("Cancelled");
+				ui_.setClassTextColor(Color.BLACK);
+				ui_.setClassText("Cancelled");
+				timer_.cancel();
+				timer_.purge();
+				ui_.toggleCancelButton();
+				ui_.toggleRunButton();
+				running_ = false;
 			}
 		});
 
 		// Logs out
-		logoutbutton_.setOnClickListener(new OnClickListener() {
+		ui_.setLogoutButtonListener(new OnClickListener() {
 			@Override
 			public void onClick(View v) {
-				loginview_.setVisibility(View.VISIBLE);
-				classview_.setVisibility(View.GONE);
+				ui_.setClassTextColor(Color.BLACK);
+				ui_.setClassText("Logging out...");
+				ui_.setLoginTextColor(Color.BLACK);
+				ui_.setLoginText("");
+				if(running_) {
+					timer_.cancel();
+					timer_.purge();
+				}
+				new LoginTask(ui_,user_).execute("Logout");
 			}
 		});
+	}
+	
+	class MyTimer extends TimerTask {
+
+		@Override
+		public void run() {
+			MainActivity.this.runOnUiThread(new Runnable() {
+
+				@Override
+				public void run() {
+					new NetworkTask(ui_, user_).execute("");
+				}
+			});
+		}
 	}
 }

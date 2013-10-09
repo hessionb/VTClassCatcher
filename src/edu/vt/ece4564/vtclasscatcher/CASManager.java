@@ -1,10 +1,12 @@
 package edu.vt.ece4564.vtclasscatcher;
 
 import java.io.BufferedReader;
+import java.io.DataOutputStream;
 import java.io.IOException;
 import java.io.InputStreamReader;
 import java.net.URL;
 import java.net.URLEncoder;
+import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.Map;
 
@@ -13,6 +15,7 @@ import javax.net.ssl.HttpsURLConnection;
 import org.apache.http.protocol.HTTP;
 
 
+import android.text.TextUtils;
 import android.util.Log;
 
 /***
@@ -20,27 +23,48 @@ import android.util.Log;
  * 
  * @author Brian Hession
  *
- * Class that manages a session on the Virginia Tech CAS. This is not 100% secure.
- * It is vulnerable to DNS hacks. Use at your own risk.
+ * Class that manages a session on the Virginia Tech CAS. 
+ * 
+ * This class is incomplete for the time being and it is not 100% secure.
+ * Use at your own risk.
+ * 
  */
 
 public class CASManager {
+    
+	// LogCat info
+    private static final String LOGCAT_TAG					= "VTClassCatcher";
     
 	// Static strings
     private static final String CAS_LOGIN_URL			= "https://auth.vt.edu/login";
     private static final String CAS_LOGOUT_URL			= "https://auth.vt.edu/logout";
     private static final String USER_AGENTS				= "Mozilla/5.0 (Windows NT 6.1; WOW64; rv:11.0) Gecko/20100101 Firefox/11.0";
+    private static final String HOKIE_SPA_URL			= "https://banweb.banner.vt.edu/ssomanager_prod/c/SSB";
     
     // Member variables
     private char[] username_;
     private char[] password_;
     private boolean validCredentials_;
-    private String cookie_;
+    private Map<String, String> cookies_;
     
-	public CASManager(char[] username, char[] password) throws LoginException {
+	public CASManager() {
+		validCredentials_ = false;
+		cookies_ = new HashMap<String, String>();
+	}
+	
+	
+	
+	/***
+	 * setCredentials()
+	 * 
+	 * Sets the username and password
+	 * 
+	 * @param username
+	 * @param password
+	 */
+	public void setCredentials(char[] username, char[] password) {
 		username_ = new char[username.length];
 		password_ = new char[password.length];
-		validCredentials_ = false;
 		
 		// Copy over credentials
 		for(int i = 0; i < username.length; ++i) username_[i] = username[i];
@@ -49,13 +73,6 @@ public class CASManager {
 		// Clear temporary credentials
 		for(int i = 0; i < username.length; ++i) username[i] = 0;
 		for(int i = 0; i < password.length; ++i) password[i] = 0;
-		
-		try {
-			validCredentials_ = login();
-		} catch (LoginException e) {
-			clearCredentials();
-			throw new LoginException();
-		}
 	}
 	
 	
@@ -65,8 +82,21 @@ public class CASManager {
 	 * 
 	 * @return the cookie for the session
 	 */
-	public String getCookie() {
-		return cookie_;
+	public Map<String, String> getCookies() {
+		return cookies_;
+	}
+	
+
+	
+	/***
+	 * updateCookes()
+	 * 
+	 * Updates the SESSID cookie which changes per request
+	 * 
+	 * @param SESSID
+	 */
+	public void updateCookies(String SESSID) {
+		cookies_.put("SESSID",SESSID);
 	}
 	
 	
@@ -81,6 +111,20 @@ public class CASManager {
 	}
 	
 	
+	
+	/***
+	 * startSession()
+	 * 
+	 * Starts a session on CAS
+	 * 
+	 * @return whether successful or not
+	 * @throws LoginException
+	 */
+	public boolean startSession() throws LoginException {
+		return (validCredentials_ = login());
+	}
+	
+	
 
 	/***
 	 * endSession()
@@ -92,6 +136,7 @@ public class CASManager {
 	public boolean endSession() {
 		boolean ret = logout();
 		clearCredentials();
+		cookies_.clear();
 		return ret;
 	}
 	
@@ -117,7 +162,10 @@ public class CASManager {
 	/***
 	 * login()
 	 * 
-	 * Starts a session with CAS
+	 * Starts a session with CAS.
+	 * 
+	 * ***NOTE*** I was running out of time, so I hard-coded each redirect to send the 
+	 * proper cookie. I plan fixing this later in my spare time.
 	 * 
 	 * @return whether the login was successful
 	 * @throws LoginException
@@ -126,68 +174,104 @@ public class CASManager {
 		try {
 			String url;
 			HttpsURLConnection conn;
+			ArrayList<String> authCookies;
+			ArrayList<String> hokiespaCookies;
 			
 			// Connect to URL and grab cookie
-			HttpsURLConnection.setFollowRedirects(false);
 			conn = (HttpsURLConnection) new URL(CAS_LOGIN_URL).openConnection();
+			conn.setInstanceFollowRedirects(false);
 			conn.connect();
-			cookie_ = getCookie(conn);
-			
-			// If redirected
-			if(conn.getResponseCode() == 302 || conn.getResponseCode() == 301) {
-				conn.disconnect();
-				url = conn.getHeaderField("Location");
-				HttpsURLConnection.setFollowRedirects(true);
-				conn = (HttpsURLConnection) new URL(url).openConnection();
-				conn.setRequestProperty("Cookie", cookie_);
-				conn.connect();
-			}
-			
-			// Grab divs
-			Map<String, String> divs = getDivs(getHtml(conn));
-			
-			// Disconnect
+			authCookies = getCookies(conn);
+			url = conn.getHeaderField("Location");
 			conn.disconnect();
 			
-			// Print stuff to LogCat
-			Log.d("ClassCatcher", "Cookie: " + cookie_);
-			Log.d("ClassCatcher", "Divs: " + divs.toString());
+			// Handle redirect to extract Divs
+			conn = (HttpsURLConnection) new URL(url).openConnection();
+			conn.setInstanceFollowRedirects(false);
+			conn.setRequestProperty("Cookie", TextUtils.join(",", authCookies));
+			conn.connect();
+			Map<String, String> divs = getDivs(getHtml(conn));
+			conn.disconnect();
 			
-			// Encode data
-			String data = "username=" + URLEncoder.encode(divs.get("username"),HTTP.UTF_8) + 
+			/***
+			 * ***NOTE*** username and password are being stored in a String. This is
+			 * not secure. I plan on fixing this later.
+			 */
+			
+			// Encode data and log in
+			String data = "username=" + URLEncoder.encode(divs.get("username"),HTTP.UTF_8) +
 						  "&password=" + URLEncoder.encode(divs.get("password"),HTTP.UTF_8) +
 						  "&lt=" + divs.get("lt") +
 						  "&execution=" + divs.get("execution") +
 						  "&_eventId=" + divs.get("_eventId") +
 						  "&submit=" + divs.get("submit");
-			url = CAS_LOGIN_URL + "?" + data;
-			
-			// Send login
-			HttpsURLConnection.setFollowRedirects(true);
-			conn = (HttpsURLConnection) new URL(url).openConnection();
-			conn.setRequestMethod("GET");
+			conn = (HttpsURLConnection) new URL(CAS_LOGIN_URL).openConnection();
+			conn.setInstanceFollowRedirects(false);
+			conn.setRequestMethod("POST");
 			conn.setDoOutput(true);
 			conn.setRequestProperty("User-Agent", USER_AGENTS);
 			conn.setRequestProperty("Content-Type", "application/x-www-form-urlencoded");
-			conn.setRequestProperty("Cookie", cookie_);
+			conn.setRequestProperty("Cookie", TextUtils.join(",", authCookies));
 			conn.connect();
-			
-			// Validate Login
-			if(!validateLogin(getHtml(conn))) throw new LoginException();
-			
-			// Get cookie
-			cookie_ = getCookie(conn);
-							
-			// Print login attempt
-			Log.d("ClassCatcher", "Cookie: " + getCookie(conn));
+			DataOutputStream out = new DataOutputStream(conn.getOutputStream());
+			out.writeBytes(data); // Send POST login data
+			out.flush();
+			out.close();
+			if(!validateLogin(getHtml(conn))) throw new LoginException(); // Check login
+			authCookies.addAll(getCookies(conn)); // Get the cookies
+			conn.disconnect();
+
+			// Go to HokieSpa
+			conn = (HttpsURLConnection) new URL(HOKIE_SPA_URL).openConnection();
+			conn.setInstanceFollowRedirects(false);
+			conn.setRequestMethod("GET");
+			conn.setRequestProperty("User-Agent", USER_AGENTS);
+			conn.connect();
+			hokiespaCookies = getCookies(conn);
+			url = conn.getHeaderField("Location");
+			conn.disconnect();
+
+			// Send CASTGC cookie
+			conn = (HttpsURLConnection) new URL(url).openConnection();
+			conn.setInstanceFollowRedirects(false);
+			conn.setRequestMethod("GET");
+			conn.setRequestProperty("User-Agent", USER_AGENTS);
+			conn.setRequestProperty("Cookie", authCookies.get(0) + "," + authCookies.get(2));
+			conn.connect();
+			url = conn.getHeaderField("Location");		
+			conn.disconnect();
+
+			// Send j2eeroute cookie
+			conn = (HttpsURLConnection) new URL(url).openConnection();
+			conn.setInstanceFollowRedirects(false);
+			conn.setRequestMethod("GET");
+			conn.setRequestProperty("User-Agent", USER_AGENTS);
+			conn.setRequestProperty("Cookie", TextUtils.join(",", hokiespaCookies));
+			conn.connect();
+			hokiespaCookies = getCookies(conn);
+			url = conn.getHeaderField("Location");
+			conn.disconnect();
+
+			// Send IDMSESSID cookie
+			conn = (HttpsURLConnection) new URL(url).openConnection();
+			conn.setInstanceFollowRedirects(false);
+			conn.setRequestMethod("GET");
+			conn.setRequestProperty("User-Agent", USER_AGENTS);
+			conn.setRequestProperty("Cookie", hokiespaCookies.get(1));
+			conn.connect();
+			hokiespaCookies.addAll(getCookies(conn));
+			conn.disconnect();
+
+			// Add important cookies to map
+			cookies_.put("CASTGC",authCookies.get(0));
+			cookies_.put("IDMSESSID",hokiespaCookies.get(1));
+			cookies_.put("SESSID",hokiespaCookies.get(3));
 			
 			return true;
-		} catch (LoginException e) {
-			throw new LoginException();
 		} catch (IOException e) {
-			e.printStackTrace(); 
+			Log.e(LOGCAT_TAG, "Login: IOException error: " + e.getMessage());
 		} catch (Exception e) {
-			e.printStackTrace();
+			Log.e(LOGCAT_TAG, "Login: Exception error: " + e.getMessage());
 		} 
 		return false;
 	}
@@ -203,15 +287,17 @@ public class CASManager {
 	 */
 	private boolean logout() {
 		try {
+			// Send CASTGC and IDMSESSID cookies
 			HttpsURLConnection conn = (HttpsURLConnection) new URL(CAS_LOGOUT_URL).openConnection();
-			conn.setRequestProperty("Cookie", cookie_);
+			conn.setRequestProperty("Cookie", cookies_.get("CASTGC"));
+			conn.setRequestProperty("Cookie", cookies_.get("IDMSESSID"));
 			conn.connect();
 			if(validateLogout(getHtml(conn))) return true;
 			else return false;
 		} catch (IOException e) {
-			e.printStackTrace();
+			Log.e(LOGCAT_TAG, "Logout: IOException error");
 		} catch (Exception e) {
-			e.printStackTrace();
+			Log.e(LOGCAT_TAG, "Logout: Exception error");
 		}
 		return false;
 	}
@@ -231,17 +317,19 @@ public class CASManager {
 	
 	
 	/***
-	 * getCookie()
+	 * getCookies()
 	 * 
-	 * Extracts the cookie
+	 * Extracts the cookie(s)
 	 * 
 	 * @param conn - The HTTP Connection object
-	 * @return the cookie in a string
+	 * @return the cookies in an ArrayList
 	 */
-	private String getCookie(HttpsURLConnection conn) {
-		String ret = conn.getHeaderField("Set-Cookie");
-		if(ret != null)
-			ret = ret.substring(0,ret.indexOf(';')).trim();
+	private ArrayList<String> getCookies(HttpsURLConnection conn) {
+		ArrayList<String> ret = new ArrayList<String>();
+		for(String value : conn.getHeaderFields().get("Set-Cookie")) {
+			value = value.substring(0,value.indexOf(';'));
+			ret.add(value);
+		}
 		return ret;
 	}
 	
@@ -276,9 +364,9 @@ public class CASManager {
 	 * @param html - String containing all of the HTML
 	 * @return HashMap of the data to send
 	 */
-	private Map<String, String> getDivs(String html) {
+	private Map<String, String> getDivs(String html) throws Exception {
 		Map<String, String> divs = new HashMap<String, String>();
-		
+
 		// Take the login-form out of the html
 		String form = html.substring(html.indexOf("<form id=\"login-form\""));
 		form = form.substring(0,form.indexOf("</form>") + "</form>".length());
@@ -298,7 +386,7 @@ public class CASManager {
 		divs.put("submit", "_submit");
 		divs.put("username", String.copyValueOf(username_));
 		divs.put("password", String.copyValueOf(password_));
-
+			
 		return divs;
 	}
 
@@ -313,7 +401,7 @@ public class CASManager {
 	 * @return whether the login was successful
 	 */
 	private boolean validateLogin(String html) {
-		return (html.indexOf("Login Successful") >= 0);
+		return (html.indexOf("Login Succeeded") >= 0);
 	}
 	
 	
@@ -327,6 +415,6 @@ public class CASManager {
 	 * @return whether successful or not
 	 */
 	private boolean validateLogout(String html) {
-		return (html.indexOf("Logout successful") >= 0);
+		return (html.indexOf("Logout Succeeded") >= 0);
 	}
 }
