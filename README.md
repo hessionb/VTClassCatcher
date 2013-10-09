@@ -1,20 +1,18 @@
 VTClassCatcher
-==============
+--------------
 
 Contributor: Brian Hession  
 Source: [https://github.com/hessionb/VTClassCatcher](https://github.com/hessionb/VTClassCatcher)  
 License: GPLv2 or later  
-License URI: http://www.gnu.org/licenses/gpl-2.0.html  
+License URI: [http://www.gnu.org/licenses/gpl-2.0.html](http://www.gnu.org/licenses/gpl-2.0.html)  
 
-Description
------------
+### Description
 
 Starts a session on Virginia Tech CAS and HokieSpa. Allows a 
 user to input a class and check its availability. It checks for 
 availability every 5 minutes.
 
-License
--------
+### License
 
 Copyright (C) 2013  Brian Hession
 
