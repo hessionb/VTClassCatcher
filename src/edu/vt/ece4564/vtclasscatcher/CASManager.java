@@ -20,13 +20,13 @@ import android.util.Log;
 
 /***
  * CASManager
- * 
- * @author Brian Hession
  *
  * Class that manages a session on the Virginia Tech CAS. 
  * 
  * This class is incomplete for the time being and it is not 100% secure.
  * Use at your own risk.
+ * 
+ * @author Brian Hession
  * 
  */
 

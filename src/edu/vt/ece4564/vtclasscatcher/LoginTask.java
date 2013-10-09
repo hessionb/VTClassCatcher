@@ -8,7 +8,7 @@ import android.os.AsyncTask;
  * 
  * This task decides whether to start or end a session on CAS
  * 
- * @author Brian
+ * @author Brian Hession
  *
  */
 

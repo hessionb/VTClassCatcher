@@ -16,7 +16,7 @@ import android.util.Log;
  * 
  * This class handles the network lookup of a specific course
  * 
- * @author Brian
+ * @author Brian Hession
  *
  */
 
@@ -59,6 +59,7 @@ public class NetworkTask extends AsyncTask<String, Void, String> {
 		return null;
 	}
 	
+	@Override
 	protected void onPostExecute(String result) {
 		if(result != null) new ProcessTask(ui_).execute(result);
 		else {

@@ -12,7 +12,7 @@ import android.util.Log;
  * 
  * This is a task that processes the html returned from the network task.
  * 
- * @author Brian
+ * @author Brian Hession
  *
  */
 

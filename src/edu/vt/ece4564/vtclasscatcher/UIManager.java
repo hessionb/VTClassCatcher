@@ -16,7 +16,7 @@ import android.widget.TextView;
  * 
  * Must call every set* function to avoid null errors.
  * 
- * @author Brian
+ * @author Brian Hession
  *
  */
 
