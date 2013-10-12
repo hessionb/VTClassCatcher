@@ -66,7 +66,6 @@ public class NetworkTask extends AsyncTask<String, Void, String> {
 			ui_.setClassTextColor(Color.RED);
 			ui_.setClassText("Error connecting");
 		}
-		
 	}
 	
 	/***

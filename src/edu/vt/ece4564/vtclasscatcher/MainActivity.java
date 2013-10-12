@@ -33,7 +33,8 @@ public class MainActivity extends Activity {
 		
 		// Get resources
 		ui_.setViews((View) findViewById(R.id.loginview), 
-					 (View) findViewById(R.id.classview));
+					 (View) findViewById(R.id.classview),
+					 (View) findViewById(R.id.enterclassview));
 		ui_.setTextViews((TextView) findViewById(R.id.loginupdate), 
 						 (TextView) findViewById(R.id.classupdate));
 		ui_.setEditTexts((EditText) findViewById(R.id.pidinput),
@@ -90,6 +91,7 @@ public class MainActivity extends Activity {
 		ui_.setRunButtonListener(new OnClickListener() {
 			@Override
 			public void onClick(View v) {
+				ui_.setClassInfoView();
 				ui_.setClassTextColor(Color.BLACK);
 				ui_.setClassText("Getting data...");
 				ui_.toggleCancelButton();
@@ -104,8 +106,7 @@ public class MainActivity extends Activity {
 		ui_.setCancelButtonListener(new OnClickListener() {
 			@Override
 			public void onClick(View v) {
-				ui_.setClassTextColor(Color.BLACK);
-				ui_.setClassText("Cancelled");
+				ui_.setEnterClassView();
 				timer_.cancel();
 				timer_.purge();
 				ui_.toggleCancelButton();
@@ -118,8 +119,6 @@ public class MainActivity extends Activity {
 		ui_.setLogoutButtonListener(new OnClickListener() {
 			@Override
 			public void onClick(View v) {
-				ui_.setClassTextColor(Color.BLACK);
-				ui_.setClassText("Logging out...");
 				ui_.setLoginTextColor(Color.BLACK);
 				ui_.setLoginText("");
 				if(running_) {

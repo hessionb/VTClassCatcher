@@ -42,14 +42,15 @@ public class LoginTask extends AsyncTask<String, Void, String> {
 	}
 	
 	protected void onPostExecute(String result) {
-		if(result.equals("Login Succeeded")) ui_.switchViews();
+		if(result.equals("Login Succeeded")) ui_.switchLoginViews();
 		else if(result.equals("Login Failed")) {
 			ui_.setLoginTextColor(Color.RED);
 			ui_.setLoginText("Wrong username or password");
 		}
 		else {
 			ui_.clearPassword();
-			ui_.switchViews();
+			ui_.switchLoginViews();
+			ui_.setEnterClassView();
 		}
 	}
 }

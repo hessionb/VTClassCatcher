@@ -26,7 +26,7 @@ public class UIManager {
 	private EditText pidInput_, passwordInput_, crnInput_, yearInput_;
 	private Spinner termSpinner_;
 	private TextView loginUpdate_, classUpdate_;
-	private View loginView_, classView_;
+	private View loginView_, classView_, enterClassView_;
 	
 	public void setButtons(Button loginButton, Button runButton, Button cancelButton, Button logoutButton) {
 		loginButton_ = loginButton;
@@ -56,6 +56,10 @@ public class UIManager {
 		passwordInput_ = passwordInput;
 		crnInput_ = crnInput;
 		yearInput_ = yearInput;
+		/* For demo
+		pidInput_.setText("");
+		passwordInput_.setText("");
+		*/
 	}
 	
 	public void setSpinners(Spinner termSpinner) {
@@ -67,12 +71,13 @@ public class UIManager {
 		classUpdate_ = classUpdate;
 	}
 	
-	public void setViews(View loginView, View classView) {
+	public void setViews(View loginView, View classView, View enterClassView) {
 		loginView_ = loginView;
 		classView_ = classView;
+		enterClassView_ = enterClassView;
 	}
 	
-	public void switchViews() {
+	public void switchLoginViews() {
 		if(loginView_.getVisibility() == View.VISIBLE) {
 			classView_.setVisibility(View.VISIBLE);
 			loginView_.setVisibility(View.GONE);
@@ -81,6 +86,16 @@ public class UIManager {
 			loginView_.setVisibility(View.VISIBLE);
 			classView_.setVisibility(View.GONE);
 		}
+	}
+	
+	public void setEnterClassView() {
+		enterClassView_.setVisibility(View.VISIBLE);
+		classUpdate_.setVisibility(View.GONE);
+	}
+	
+	public void setClassInfoView() {
+		classUpdate_.setVisibility(View.VISIBLE);
+		enterClassView_.setVisibility(View.GONE);
 	}
 	
 	public char[] getLoginInputText() {

@@ -1,112 +1,61 @@
 <?xml version="1.0" encoding="utf-8"?>
-<RelativeLayout xmlns:android="http://schemas.android.com/apk/res/android"
+<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
     android:layout_width="match_parent"
     android:layout_height="match_parent"
-    android:background="#f1f1f1" >
+    android:background="#f1f1f1" 
+    android:orientation="vertical" >
 
-    <TextView
-        android:id="@+id/textView1"
-        android:layout_width="wrap_content"
-        android:layout_height="wrap_content"
-        android:layout_alignParentLeft="true"
-        android:layout_alignParentTop="true"
-        android:layout_marginLeft="20dp"
-        android:layout_marginTop="25dp"
-        android:text="@string/crnstr"
-        android:textColor="#000000" />
-
-    <EditText
-        android:id="@+id/crninput"
-        android:layout_width="wrap_content"
-        android:layout_height="wrap_content"
-        android:layout_alignBaseline="@+id/textView1"
-        android:layout_alignBottom="@+id/textView1"
-        android:layout_alignParentRight="true"
-        android:ems="10"
-        android:inputType="number"
-        android:textColor="#000000" >
-
-        <requestFocus />
-    </EditText>
-
-    <Spinner
-        android:id="@+id/termspinner"
-        android:layout_width="wrap_content"
-        android:layout_height="wrap_content"
-        android:layout_alignLeft="@+id/crninput"
-        android:layout_alignParentRight="true"
-        android:layout_below="@+id/crninput"
-        android:layout_marginTop="20dp" />
-
-    <TextView
-        android:id="@+id/textView2"
-        android:layout_width="wrap_content"
-        android:layout_height="wrap_content"
-        android:layout_alignLeft="@+id/textView1"
-        android:layout_alignTop="@+id/termspinner"
-        android:text="@string/termstr"
-        android:textColor="#000000" />
-
-    <EditText
-        android:id="@+id/yearinput"
-        android:layout_width="wrap_content"
-        android:layout_height="wrap_content"
-        android:layout_alignBaseline="@+id/textView3"
-        android:layout_alignBottom="@+id/textView3"
-        android:layout_alignLeft="@+id/termspinner"
-        android:layout_alignParentRight="true"
-        android:ems="10"
-        android:inputType="number"
-        android:textColor="#000000" />
-
-    <TextView
-        android:id="@+id/textView3"
-        android:layout_width="wrap_content"
-        android:layout_height="wrap_content"
-        android:layout_alignLeft="@+id/textView2"
-        android:layout_below="@+id/termspinner"
-        android:layout_marginTop="16dp"
-        android:text="@string/yearstr"
-        android:textColor="#000000" />
-
-    <Button
-        android:id="@+id/runbutton"
+    <FrameLayout 
+        android:id="@+id/framLayout"
         android:layout_width="match_parent"
-        android:layout_height="wrap_content"
-        android:layout_below="@+id/yearinput"
-        android:layout_marginTop="20dp"
-        android:text="@string/runstr"
-        android:textSize="@dimen/activity_vertical_margin" />
+    	android:layout_height="0dp"
+    	android:layout_weight="1" >
+    	
+	    <include layout="@layout/enter_class_main"
+	        android:id="@+id/enterclassview" 
+			android:layout_width="wrap_content" 
+			android:layout_height="wrap_content" 
+			android:visibility="visible" />
 
-    <Button
-        android:id="@+id/cancelbutton"
-        style="?android:attr/buttonStyleSmall"
-        android:layout_width="match_parent"
-        android:layout_height="wrap_content"
-        android:layout_alignParentLeft="true"
-        android:layout_below="@+id/runbutton"
-        android:enabled="false"
-        android:text="@string/cancelstr"
-        android:textSize="@dimen/activity_vertical_margin" />
+	    <include layout="@layout/class_info_main"
+	        android:id="@+id/classupdate" 
+			android:layout_width="wrap_content" 
+			android:layout_height="wrap_content" 
+			android:visibility="gone" />
+    </FrameLayout>
 
-    <Button
-        android:id="@+id/logoutbutton"
-        style="?android:attr/buttonStyleSmall"
-        android:layout_width="match_parent"
-        android:layout_height="wrap_content"
-        android:layout_alignParentLeft="true"
-        android:layout_below="@+id/cancelbutton"
-        android:text="@string/logoutstr"
-        android:textSize="@dimen/activity_vertical_margin" />
-
-    <TextView
-        android:id="@+id/classupdate"
-        android:layout_width="wrap_content"
-        android:layout_height="wrap_content"
-        android:layout_below="@+id/logoutbutton"
-        android:layout_centerHorizontal="true"
-        android:layout_marginTop="8dp"
-        android:text=""
-        android:textColor="#000000" />
-
-</RelativeLayout>
+   <LinearLayout 
+	    android:layout_width="match_parent"
+	    android:layout_height="wrap_content"
+	    android:orientation="horizontal" 
+	    android:gravity="bottom" >
+	    
+	    <Button
+	        android:id="@+id/runbutton"
+	        style="?android:attr/buttonStyleSmall"
+	        android:layout_height="match_parent"
+	        android:layout_width="0dp"
+	        android:layout_weight="1"
+	        android:text="@string/runstr"
+	        android:textSize="@dimen/activity_vertical_margin" />
+	
+	    <Button
+	        android:id="@+id/cancelbutton"
+	        style="?android:attr/buttonStyleSmall"
+	        android:layout_height="match_parent"
+	        android:layout_width="0dp"
+	        android:layout_weight="1"
+	        android:enabled="false"
+	        android:text="@string/cancelstr"
+	        android:textSize="@dimen/activity_vertical_margin" />
+	
+	    <Button
+	        android:id="@+id/logoutbutton"
+	        style="?android:attr/buttonStyleSmall"
+	        android:layout_height="match_parent"
+	        android:layout_width="0dp"
+	        android:layout_weight="1"
+	        android:text="@string/logoutstr"
+	        android:textSize="@dimen/activity_vertical_margin" />
+	</LinearLayout>
+</LinearLayout>

@@ -33,11 +33,16 @@ public class ProcessTask extends AsyncTask<String, Void, Map<String, String>> {
 	protected void onPostExecute(Map<String, String> result) {
 		if(result != null) {
 			ui_.setClassTextColor(Color.BLACK);
-			ui_.setClassText("Seats available: " + result.get("Seats"));
+			String classinfo = "Class: " + result.get("Name") + "\n\n" +
+							   "When: " + result.get("BeginTime") + "-" + result.get("EndTime") + " " + result.get("Days") + "\n\n" +
+							   "Where: " + result.get("Location") + "\n\n" +
+							   "Instructor: " + result.get("Instructor") + "\n\n" +
+							   "Seats available: " + result.get("Seats") + "/" + result.get("Capacity");
+			ui_.setClassText(classinfo);
 		}
 		else {
 			ui_.setClassTextColor(Color.RED);
-			ui_.setClassText("Error: Exception was thrown");
+			ui_.setClassText("Description Not Found");
 		}
 	}
 	
@@ -52,9 +57,13 @@ public class ProcessTask extends AsyncTask<String, Void, Map<String, String>> {
 	 */
 	private Map<String, String> parseHtml(String html) {
 		Map<String, String> info = new HashMap<String, String>();
-		String description, days, beginTime, endTime, location, exam, instructor, type, status, seats, capacity;
+		String name, description, days, beginTime, endTime, location, exam, instructor, type, status, seats, capacity;
 		
 		try {
+			// Parse name
+			name = html.substring(html.lastIndexOf("<TD COLSPAN=\"2\"  CLASS=title>") + "<TD COLSPAN=\"2\"  CLASS=title>".length());
+			name = name.substring(0,name.indexOf("</TD")).trim();
+			
 			// Parse description
 			description = html.substring(html.indexOf("<TD COLSPAN=\"1\" CLASS=\"pldefault\">") + "<TD COLSPAN=\"1\" CLASS=\"pldefault\">".length());
 			description = description.substring(0,description.indexOf("</TD")).trim();
@@ -86,6 +95,7 @@ public class ProcessTask extends AsyncTask<String, Void, Map<String, String>> {
 			capacity = temp.substring(temp.indexOf('>') + 1,temp.indexOf("</TD>")).trim();
 	
 			// Populate info
+			info.put("Name", name);
 			info.put("Description", description);
 			info.put("Days", days);
 			info.put("BeginTime", beginTime);
