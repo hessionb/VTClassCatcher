@@ -92,12 +92,12 @@ public class MainActivity extends Activity {
 			@Override
 			public void onClick(View v) {
 				ui_.setClassInfoView();
-				ui_.setClassTextColor(Color.BLACK);
-				ui_.setClassText("Getting data...");
 				ui_.toggleCancelButton();
 				ui_.toggleRunButton();
 				timer_ = new Timer();
+				// Switch for demo
 				timer_.schedule(new MyTimer(), 0, 5*60*1000); // 5 minutes
+				//timer_.schedule(new MyTimer(), 0, 30*1000); // 30 seconds
 				running_ = true;
 			}
 		});
@@ -138,6 +138,8 @@ public class MainActivity extends Activity {
 
 				@Override
 				public void run() {
+					ui_.setClassTextColor(Color.BLACK);
+					ui_.setClassText("Getting data...");
 					new NetworkTask(ui_, user_).execute("");
 				}
 			});
